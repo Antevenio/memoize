@@ -11,7 +11,7 @@ class Memoize
     static $cache = [];
     static $usedMemory = 0;
 
-    public static function memoize(callable $callable, array $arguments = [])
+    public function memoize(callable $callable, array $arguments = [])
     {
         $hash = self::computeHash($callable, $arguments);
         if (self::elementExists($hash) && self::elementExpired($hash)) {
@@ -60,7 +60,7 @@ class Memoize
         return md5(serialize($callable) . serialize($arguments));
     }
 
-    public static function flush()
+    public function flush()
     {
         self::$cache = null;
         self::$cache = [];
