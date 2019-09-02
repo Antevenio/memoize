@@ -8,5 +8,10 @@
             "email": "imota@antevenio.com"
         }
     ],
+    "autoload": {
+        "psr-4": {
+            "Antevenio\\Memoize\\": "src/"
+        }
+    },
     "require": {}
 }
