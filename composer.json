@@ -1,0 +1,12 @@
+{
+    "name": "antevenio/memoize",
+    "description": "In memory function memoizing, can be capped by total memory consumption and per function ttl.",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Iván Mota",
+            "email": "imota@antevenio.com"
+        }
+    ],
+    "require": {}
+}
