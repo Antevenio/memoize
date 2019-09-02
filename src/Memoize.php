@@ -57,7 +57,7 @@ class Memoize
 
     protected static function computeHash(callable $callable, array $arguments)
     {
-        return md5(serialize($callable) . serialize($arguments));
+        return md5(json_encode($callable) . serialize($arguments));
     }
 
     public function flush()

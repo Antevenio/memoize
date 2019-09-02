@@ -13,5 +13,7 @@
             "Antevenio\\Memoize\\": "src/"
         }
     },
-    "require": {}
+    "require": {
+        "ext-json": "*"
+    }
 }
