@@ -14,12 +14,17 @@ class Memoize
     /**
      * @param callable $callable
      * @param array $arguments
+     * @param mixed $userKey
      * @return mixed
      * @throws \Exception
      */
-    public function memoize(callable $callable, array $arguments = [])
+    public function memoize(callable $callable, array $arguments = [], $userKey = null)
     {
-        $hash = self::computeHash($callable, $arguments);
+        $hashKey = $arguments;
+        if ($userKey) {
+            $hashKey = $userKey;
+        }
+        $hash = self::computeHash($callable, $hashKey);
         if (self::elementExists($hash) && self::elementExpired($hash)) {
             self::removeCacheEntry($hash);
         }
@@ -74,9 +79,9 @@ class Memoize
         return (time() - self::$cache[$hash]->getTimestamp()) > self::TTL;
     }
 
-    protected static function computeHash(callable $callable, array $arguments)
+    protected static function computeHash(callable $callable, $hashKey)
     {
-        return md5(json_encode($callable) . serialize($arguments));
+        return md5(json_encode($callable) . serialize($hashKey));
     }
 
     public function flush()
