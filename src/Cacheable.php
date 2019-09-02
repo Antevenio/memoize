@@ -6,11 +6,22 @@ class Cacheable
     protected $timestamp;
     protected $data;
     protected $usedMemory;
+    protected $thrownException;
 
+    /**
+     * Cacheable constructor.
+     * @param callable $callable
+     * @param $arguments
+     */
     public function __construct(callable $callable, $arguments)
     {
+        $thrownException = null;
         $currentMemoryUsage = memory_get_usage();
-        $this->data = call_user_func_array($callable, $arguments);
+        try {
+            $this->data = call_user_func_array($callable, $arguments);
+        } catch (\Exception $ex) {
+            $this->thrownException = $ex;
+        }
         $this->usedMemory = (memory_get_usage() - $currentMemoryUsage);
         $this->timestamp = time();
     }
@@ -34,5 +45,10 @@ class Cacheable
     public function getUsedMemory()
     {
         return $this->usedMemory;
+    }
+
+    public function getThrownException()
+    {
+        return $this->thrownException;
     }
 }

@@ -11,6 +11,12 @@ class Memoize
     static $cache = [];
     static $usedMemory = 0;
 
+    /**
+     * @param callable $callable
+     * @param array $arguments
+     * @return mixed
+     * @throws \Exception
+     */
     public function memoize(callable $callable, array $arguments = [])
     {
         $hash = self::computeHash($callable, $arguments);
@@ -20,7 +26,7 @@ class Memoize
         if (!self::elementExists($hash)) {
             $element = new Cacheable($callable, $arguments);
             if ($element->getUsedMemory() > self::MAX_MEMORY) {
-                return $element->getData();
+                return $this->getResult($element);
             }
             while (self::$usedMemory + $element->getUsedMemory() > self::MAX_MEMORY) {
                 self::evictCacheEntry();
@@ -29,7 +35,20 @@ class Memoize
             self::$cache[$hash] = $element;
         }
 
-        return self::$cache[$hash]->getData();
+        return $this->getResult(self::$cache[$hash]);
+    }
+
+    /**
+     * @param Cacheable $element
+     * @return mixed
+     * @throws \Exception
+     */
+    protected function getResult(Cacheable $element)
+    {
+        if ($exception = $element->getThrownException()) {
+            throw $exception;
+        }
+        return $element->getData();
     }
 
     protected static function evictCacheEntry()
