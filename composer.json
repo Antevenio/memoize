@@ -13,7 +13,15 @@
             "Antevenio\\Memoize\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Antevenio\\Memoize\\": "tests/"
+        }
+    },
     "require": {
         "ext-json": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^5.7"
     }
 }
