@@ -12,7 +12,7 @@ class Cache
     protected static $usedMemory = 0;
     protected static $memoryLimit = self::DEFAULT_MEMORY_LIMIT;
 
-    public function withMemoryLimit($limit)
+    public function setMemoryLimit($limit)
     {
         self::$memoryLimit = $limit;
 

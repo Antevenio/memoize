@@ -214,7 +214,7 @@ class MemoizeTest extends \PHPUnit_Framework_TestCase
     {
         $memoryLimit = 10000;
 
-        $this->sut->getCache()->withMemoryLimit(10000);
+        $this->sut->getCache()->setMemoryLimit(10000);
 
         for ($i = 0; $i < 100; $i++) {
             $mock = $this->getCallableMock();
@@ -242,7 +242,7 @@ class MemoizeTest extends \PHPUnit_Framework_TestCase
         $memoizableUsedMemory = $sampleMemoizable->calculateUsedMemory();
         $memoryLimit = $memoizableUsedMemory * 2 +
             $memoizableUsedMemory / 2;
-        $this->sut->getCache()->withMemoryLimit(
+        $this->sut->getCache()->setMemoryLimit(
             $memoryLimit
         );
         /** @var \PHPUnit_Framework_MockObject_MockObject $mock */
@@ -265,7 +265,7 @@ class MemoizeTest extends \PHPUnit_Framework_TestCase
     {
         $mock = $this->getCallableMock();
         $memoizable = (new Memoizable([$mock, 'doit'], ['a', 'b']))->withTtl(100);
-        $this->sut->getCache()->withMemoryLimit($memoizable->calculateUsedMemory() - 1);
+        $this->sut->getCache()->setMemoryLimit($memoizable->calculateUsedMemory() - 1);
 
         $mock->expects($this->exactly(2))
             ->method('doit')

@@ -35,12 +35,14 @@ composer require antevenio/memoize
 ```
 
 ## Usage
+### Common code
 ```php
 <?php
 require_once('./vendor/autoload.php');
 
 use Antevenio\Memoize\Memoizable;
 use Antevenio\Memoize\Memoize;
+use Antevenio\Memoize\Cache;
 
 class Toolbox
 {
@@ -58,15 +60,15 @@ class Toolbox
         throw new \Exception($argument);
     }
 }
+
+$toolbox = new Toolbox();
+$memoize = new Memoize(new Cache());
 ```
 ### Basic
 ```php
-$toolbox = new Toolbox();
-$memoize = new Memoize();
-
 for ($i = 0; $i < 10; $i++) {
     $result = $memoize->memoize(
-        new Memoizable([$toolbox, 'multiply'], [10], 5)
+        (new Memoizable([$toolbox, 'multiply'], [10]))->withTtl(5)
     );
     echo "Result: $result\n";
     sleep(1);
@@ -90,12 +92,9 @@ Result: 20
 ```
 ### Changing arguments
 ```php
-$toolbox = new Toolbox();
-$memoize = new Memoize();
-
 for ($i = 0; $i < 10; $i++) {
     $result = $memoize->memoize(
-        new Memoizable([$toolbox, 'multiply'], [$i % 2], 5)
+        (new Memoizable([$toolbox, 'multiply'], [$i % 2]))->withTtl(5)
     );
     echo "Result: $result\n";
     sleep(1);
@@ -120,13 +119,9 @@ Result: 2
 ```
 ### Custom indexing
 ```php
-$toolbox = new Toolbox();
-$memoize = new Memoize();
-
 for ($i = 0; $i < 10; $i++) {
     $result = $memoize->memoize(
-        new Memoizable([$toolbox, 'multiply'], [$i], 5), 
-        'myFixedIndex'
+        (new Memoizable([$toolbox, 'multiply'], [$i]))->withTtl(5)->withCustomIndex('myFixedIndex')
     );
     echo "Result: $result\n";
     sleep(1);
@@ -149,12 +144,9 @@ Result: 10
 ```
 ### Exceptions
 ```php
-$toolbox = new Toolbox();
-$memoize = new Memoize();
-
 for ($i = 0; $i < 10; $i++) {
     $result = $memoize->memoize(
-        new Memoizable([$toolbox, 'throwException'], ['foo'], 5)
+        (new Memoizable([$toolbox, 'throwException'], ['foo']))->withTtl(5)
     );
     echo "Result: $result\n";
     sleep(1);
