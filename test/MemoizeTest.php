@@ -16,8 +16,8 @@ class MemoizeTest extends \PHPUnit_Framework_TestCase
     {
         $this->returnValue = 'some return value';
         $this->arguments = ['argument 1', 'argument 2'];
-        $this->sut = new Memoize();
-        $this->sut->flush();
+        $this->sut = new Memoize(new Cache());
+        $this->sut->getCache()->flush();
     }
 
     public function testMemoizeShouldExecuteTheCallableTheFirstTimeItsCalled()
@@ -26,8 +26,7 @@ class MemoizeTest extends \PHPUnit_Framework_TestCase
 
         $memoizable = new Memoizable(
             [$mock, 'doit'],
-            $this->arguments,
-            0
+            $this->arguments
         );
 
         $mock->expects($this->once())
@@ -45,11 +44,10 @@ class MemoizeTest extends \PHPUnit_Framework_TestCase
     {
         $mock = $this->getCallableMock();
 
-        $memoizable = new Memoizable(
+        $memoizable = (new Memoizable(
             [$mock, 'doit'],
-            $this->arguments,
-            0
-        );
+            $this->arguments
+        ))->withTtl(0);
 
         $mock->expects($this->exactly(2))
             ->method('doit')
@@ -67,11 +65,10 @@ class MemoizeTest extends \PHPUnit_Framework_TestCase
     {
         $mock = $this->getCallableMock();
 
-        $memoizable = new Memoizable(
+        $memoizable = (new Memoizable(
             [$mock, 'doit'],
-            $this->arguments,
-            10
-        );
+            $this->arguments
+        ))->withTtl(10);
 
         $mock->expects($this->once())
             ->method('doit')
@@ -108,13 +105,13 @@ class MemoizeTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(
             'c',
             $this->sut->memoize(
-                new Memoizable([$mock, 'doit'], ['a', 'b'], 10)
+                (new Memoizable([$mock, 'doit'], ['a', 'b']))->withTtl(10)
             )
         );
         $this->assertEquals(
             'f',
             $this->sut->memoize(
-                new Memoizable([$mock, 'doit'], ['d', 'e'], 10)
+                (new Memoizable([$mock, 'doit'], ['d', 'e']))->withTtl(10)
             )
         );
     }
@@ -134,15 +131,13 @@ class MemoizeTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(
             'c',
             $this->sut->memoize(
-                new Memoizable([$mock, 'doit'], ['a', 'b'], 10),
-                'key'
+                (new Memoizable([$mock, 'doit'], ['a', 'b']))->withTtl(10)->withCustomIndex('key')
             )
         );
         $this->assertEquals(
             'c',
             $this->sut->memoize(
-                new Memoizable([$mock, 'doit'], ['d', 'e'], 10),
-                'key'
+                (new Memoizable([$mock, 'doit'], ['d', 'e']))->withTtl(10)->withCustomIndex('key')
             )
         );
     }
@@ -170,15 +165,13 @@ class MemoizeTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(
             'c',
             $this->sut->memoize(
-                new Memoizable([$mock, 'doit'], ['a', 'b'], 10),
-                'key1'
+                (new Memoizable([$mock, 'doit'], ['a', 'b']))->withTtl(10)->withCustomIndex('key1')
             )
         );
         $this->assertEquals(
             'd',
             $this->sut->memoize(
-                new Memoizable([$mock, 'doit'], ['a', 'b'], 10),
-                'key2'
+                (new Memoizable([$mock, 'doit'], ['a', 'b']))->withTtl(10)->withCustomIndex('key2')
             )
         );
     }
@@ -205,14 +198,14 @@ class MemoizeTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(
             'c',
             $this->sut->memoize(
-                new Memoizable([$mock, 'doit'], ['a', 'b'], 1)
+                (new Memoizable([$mock, 'doit'], ['a', 'b']))->withTtl(1)
             )
         );
         sleep(1);
         $this->assertEquals(
             'c',
             $this->sut->memoize(
-                new Memoizable([$mock, 'doit'], ['a', 'b'], 1)
+                (new Memoizable([$mock, 'doit'], ['a', 'b']))->withTtl(1)
             )
         );
     }
@@ -221,16 +214,16 @@ class MemoizeTest extends \PHPUnit_Framework_TestCase
     {
         $memoryLimit = 10000;
 
-        $this->sut->setMemoryLimit(10000);
+        $this->sut->getCache()->withMemoryLimit(10000);
 
         for ($i = 0; $i < 100; $i++) {
             $mock = $this->getCallableMock();
             $this->sut->memoize(
-                new Memoizable([$mock, 'doit'], ['a', 'b'], 100)
+                (new Memoizable([$mock, 'doit'], ['a', 'b']))->withTtl(100)
             );
         }
         $totalMemoryUsed = memory_get_usage();
-        $this->sut->flush();
+        $this->sut->getCache()->flush();
         $used = $totalMemoryUsed  - memory_get_usage();
         $this->assertLessThan($memoryLimit, $used);
     }
@@ -239,16 +232,17 @@ class MemoizeTest extends \PHPUnit_Framework_TestCase
     {
         /** @var Memoizable[] $memoizables */
         $memoizables = [
-            new Memoizable([$this->getCallableMock(), 'doit'], ['a', 'b'], 100),
-            new Memoizable([$this->getCallableMock(), 'doit'], ['a', 'b'], 100),
-            new Memoizable([$this->getCallableMock(), 'doit'], ['a', 'b'], 100),
+            (new Memoizable([$this->getCallableMock(), 'doit'], ['a', 'b']))->withTtl(100),
+            (new Memoizable([$this->getCallableMock(), 'doit'], ['a', 'b']))->withTtl(100),
+            (new Memoizable([$this->getCallableMock(), 'doit'], ['a', 'b']))->withTtl(100),
         ];
 
-        $sampleMemoizable = new Memoizable([$this->getCallableMock(), 'doit'], ['a', 'b'], 100);
+        $sampleMemoizable = (new Memoizable([$this->getCallableMock(), 'doit'], ['a', 'b']))
+            ->withTtl(100);
         $memoizableUsedMemory = $sampleMemoizable->calculateUsedMemory();
         $memoryLimit = $memoizableUsedMemory * 2 +
             $memoizableUsedMemory / 2;
-        $this->sut->setMemoryLimit(
+        $this->sut->getCache()->withMemoryLimit(
             $memoryLimit
         );
         /** @var \PHPUnit_Framework_MockObject_MockObject $mock */
@@ -270,8 +264,8 @@ class MemoizeTest extends \PHPUnit_Framework_TestCase
     public function testMemoizeShouldNotCacheMemoizablesThatExceedTheMemoryLimit()
     {
         $mock = $this->getCallableMock();
-        $memoizable = new Memoizable([$mock, 'doit'], ['a', 'b'], 100);
-        $this->sut->setMemoryLimit($memoizable->calculateUsedMemory() - 1);
+        $memoizable = (new Memoizable([$mock, 'doit'], ['a', 'b']))->withTtl(100);
+        $this->sut->getCache()->withMemoryLimit($memoizable->calculateUsedMemory() - 1);
 
         $mock->expects($this->exactly(2))
             ->method('doit')
@@ -284,7 +278,7 @@ class MemoizeTest extends \PHPUnit_Framework_TestCase
         $this->sut->memoize($memoizable);
 
         $currentUsedMemory = memory_get_usage();
-        $this->sut->flush();
+        $this->sut->getCache()->flush();
         $consumedMemory = $currentUsedMemory - memory_get_usage();
         $this->assertLessThanOrEqual(0, $consumedMemory);
     }
@@ -305,7 +299,7 @@ class MemoizeTest extends \PHPUnit_Framework_TestCase
 
         try {
             $this->sut->memoize(
-                new Memoizable([$mock, 'doit'], ['a', 'b'], 100)
+                (new Memoizable([$mock, 'doit'], ['a', 'b']))->withTtl(100)
             );
         } catch (\Exception $ex) {
             $this->assertEquals($ex->getMessage(), $thrownException->getMessage());
@@ -314,7 +308,7 @@ class MemoizeTest extends \PHPUnit_Framework_TestCase
 
         try {
             $this->sut->memoize(
-                new Memoizable([$mock, 'doit'], ['a', 'b'], 100)
+                (new Memoizable([$mock, 'doit'], ['a', 'b']))->withTtl(100)
             );
         } catch (\Exception $ex) {
             $this->assertEquals($ex->getMessage(), $thrownException->getMessage());

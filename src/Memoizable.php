@@ -3,6 +3,8 @@ namespace Antevenio\Memoize;
 
 class Memoizable
 {
+    const TTL_INFINITE = -1;
+
     protected $timestamp;
     protected $result;
     protected $thrownException;
@@ -10,18 +12,33 @@ class Memoizable
     protected $arguments;
     protected $callable;
     protected $usedMemory;
+    protected $customIndex;
 
     /**
      * Memoizable constructor.
      * @param callable $callable
      * @param $arguments
-     * @param int $ttl
      */
-    public function __construct(callable $callable, $arguments, $ttl)
+    public function __construct(callable $callable, $arguments)
     {
+        $this->ttl = self::TTL_INFINITE;
+        $this->customIndex = null;
         $this->arguments = $arguments;
-        $this->ttl = $ttl;
         $this->callable = $callable;
+    }
+
+    public function withTtl($ttl)
+    {
+        $this->ttl = $ttl;
+
+        return $this;
+    }
+
+    public function withCustomIndex($customIndex)
+    {
+        $this->customIndex = $customIndex;
+
+        return $this;
     }
 
     public function execute()
@@ -71,6 +88,15 @@ class Memoizable
         return $this->ttl;
     }
 
+    public function expired()
+    {
+        if ($this->getTtl() == self::TTL_INFINITE) {
+            return false;
+        } else {
+            return (time() - $this->getTimestamp()) >= $this->getTtl();
+        }
+    }
+
     public function getCallable()
     {
         return $this->callable;
@@ -81,11 +107,11 @@ class Memoizable
         return $this->arguments;
     }
 
-    public function computeHash($customArgumentKey = null)
+    public function getHash()
     {
         $argumentKey = $this->getArguments();
-        if ($customArgumentKey != null) {
-            $argumentKey = $customArgumentKey;
+        if ($this->customIndex != null) {
+            $argumentKey = $this->customIndex;
         }
 
         return md5($this->serializeCallable($this->getCallable()) . serialize($argumentKey));
