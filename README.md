@@ -4,7 +4,7 @@
 [![License](https://poser.pugx.org/antevenio/memoize/license)](https://packagist.org/packages/antevenio/memoize)
 [![Travis build](https://api.travis-ci.org/Antevenio/memoize.svg?branch=master)](https://travis-ci.org/Antevenio/memoize)
 [![Coverage Status](https://coveralls.io/repos/github/Antevenio/memoize/badge.svg?branch=master)](https://coveralls.io/github/Antevenio/memoize?branch=master)
-[![Maintainability](https://api.codeclimate.com/v1/badges/f19e715eb520e7bd6a29/maintainability)](https://codeclimate.com/github/Antevenio/memoize/maintainability)
+[![Maintainability](https://api.codeclimate.com/v1/badges/d1e9627d0179402a3d71/maintainability)](https://codeclimate.com/github/Antevenio/memoize/maintainability)
 
 Yet another in memory function memoizing library. 
 
