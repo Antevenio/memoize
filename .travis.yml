@@ -8,4 +8,4 @@ php:
 before_script:
   - travis_retry composer install --no-interaction
 after_success:
-  - travis_retry php vendor/bin/php-coveralls
+  - travis_retry php vendor/bin/php-coveralls -vvv
