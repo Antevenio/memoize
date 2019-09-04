@@ -4,12 +4,12 @@ namespace Antevenio\Memoize;
 class Memoizable
 {
     protected $timestamp;
-    protected $data;
-    protected $usedMemory;
+    protected $result;
     protected $thrownException;
     protected $ttl;
     protected $arguments;
     protected $callable;
+    protected $usedMemory;
 
     /**
      * Memoizable constructor.
@@ -28,13 +28,12 @@ class Memoizable
     {
         $this->timestamp = time();
         $this->thrownException = null;
-        $currentMemoryUsage = memory_get_usage();
         try {
-            $this->data = call_user_func_array($this->getCallable(), $this->getArguments());
+            $this->result = call_user_func_array($this->getCallable(), $this->getArguments());
         } catch (\Exception $ex) {
             $this->thrownException = $ex;
         }
-        $this->usedMemory = (memory_get_usage() - $currentMemoryUsage);
+        $this->calculateUsedMemory();
     }
 
     /**
@@ -45,12 +44,16 @@ class Memoizable
         return $this->timestamp;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getData()
+    public function calculateUsedMemory()
     {
-        return $this->data;
+        $serialized = serialize($this);
+        $old = memory_get_usage();
+        $dummy = unserialize($serialized);
+        $mem = memory_get_usage();
+        // It seems like dividing this by 2 nails the memory consumption math
+        $this->usedMemory = abs(($mem - $old)/2);
+
+        return $this->usedMemory;
     }
 
     public function getUsedMemory()
@@ -84,7 +87,25 @@ class Memoizable
         if ($customArgumentKey != null) {
             $argumentKey = $customArgumentKey;
         }
-        return md5(json_encode($this->getCallable()) . serialize($argumentKey));
+
+        return md5($this->serializeCallable($this->getCallable()) . serialize($argumentKey));
+    }
+
+    protected function serializeCallable(callable $callable)
+    {
+        if (is_array($callable)) {
+            if (is_object($callable[0])) {
+                return spl_object_hash($callable[0]) . '::' . $callable[1];
+            } else {
+                return $callable[0] . '::' . $callable[1];
+            }
+        } else {
+            if (is_object($callable)) {
+                return spl_object_hash($callable);
+            } else {
+                return $callable;
+            }
+        }
     }
 
     public function getResult()
@@ -92,6 +113,6 @@ class Memoizable
         if ($exception = $this->getThrownException()) {
             throw $exception;
         }
-        return $this->getData();
+        return $this->result;
     }
 }

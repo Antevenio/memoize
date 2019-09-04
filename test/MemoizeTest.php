@@ -2,8 +2,6 @@
 
 namespace Antevenio\Memoize;
 
-use phpDocumentor\Reflection\Types\Object_;
-
 class MemoizeTest extends \PHPUnit_Framework_TestCase
 {
     protected $returnValue;
@@ -219,9 +217,115 @@ class MemoizeTest extends \PHPUnit_Framework_TestCase
         );
     }
 
+    public function testMemoizeShouldNeverConsumeMemoryPastTheSpecifiedLimit()
+    {
+        $memoryLimit = 10000;
+
+        $this->sut->setMemoryLimit(10000);
+
+        for ($i = 0; $i < 100; $i++) {
+            $mock = $this->getCallableMock();
+            $this->sut->memoize(
+                new Memoizable([$mock, 'doit'], ['a', 'b'], 100)
+            );
+        }
+        $totalMemoryUsed = memory_get_usage();
+        $this->sut->flush();
+        $used = $totalMemoryUsed  - memory_get_usage();
+        $this->assertLessThan($memoryLimit, $used);
+    }
+
+    public function testMemoizeShouldEvictTheFirstKeyWhenOutOfAvailableMemory()
+    {
+        /** @var Memoizable[] $memoizables */
+        $memoizables = [
+            new Memoizable([$this->getCallableMock(), 'doit'], ['a', 'b'], 100),
+            new Memoizable([$this->getCallableMock(), 'doit'], ['a', 'b'], 100),
+            new Memoizable([$this->getCallableMock(), 'doit'], ['a', 'b'], 100),
+        ];
+
+        $sampleMemoizable = new Memoizable([$this->getCallableMock(), 'doit'], ['a', 'b'], 100);
+        $memoizableUsedMemory = $sampleMemoizable->calculateUsedMemory();
+        $memoryLimit = $memoizableUsedMemory * 2 +
+            $memoizableUsedMemory / 2;
+        $this->sut->setMemoryLimit(
+            $memoryLimit
+        );
+        /** @var \PHPUnit_Framework_MockObject_MockObject $mock */
+        $mock = $memoizables[0]->getCallable()[0];
+        $mock->expects($this->exactly(2))
+            ->method('doit')
+            ->with(
+                $this->equalTo('a'),
+                $this->equalTo('b')
+            );
+
+        foreach ($memoizables as $memoizable) {
+            $this->sut->memoize($memoizable);
+        }
+
+        $this->sut->memoize($memoizables[0]);
+    }
+
+    public function testMemoizeShouldNotCacheMemoizablesThatExceedTheMemoryLimit()
+    {
+        $mock = $this->getCallableMock();
+        $memoizable = new Memoizable([$mock, 'doit'], ['a', 'b'], 100);
+        $this->sut->setMemoryLimit($memoizable->calculateUsedMemory() - 1);
+
+        $mock->expects($this->exactly(2))
+            ->method('doit')
+            ->with(
+                $this->equalTo('a'),
+                $this->equalTo('b')
+            );
+
+        $this->sut->memoize($memoizable);
+        $this->sut->memoize($memoizable);
+
+        $currentUsedMemory = memory_get_usage();
+        $this->sut->flush();
+        $consumedMemory = $currentUsedMemory - memory_get_usage();
+        $this->assertLessThanOrEqual(0, $consumedMemory);
+    }
+
+    public function testMemoizeShouldCacheCallableExceptions()
+    {
+        $thrownException = new \Exception('some message');
+        $mock = $this->getCallableMock();
+        $mock->expects($this->once())
+            ->method('doit')
+            ->with(
+                $this->equalTo('a'),
+                $this->equalTo('b')
+            )
+            ->will(
+                $this->throwException($thrownException)
+            );
+
+        try {
+            $this->sut->memoize(
+                new Memoizable([$mock, 'doit'], ['a', 'b'], 100)
+            );
+        } catch (\Exception $ex) {
+            $this->assertEquals($ex->getMessage(), $thrownException->getMessage());
+            return;
+        }
+
+        try {
+            $this->sut->memoize(
+                new Memoizable([$mock, 'doit'], ['a', 'b'], 100)
+            );
+        } catch (\Exception $ex) {
+            $this->assertEquals($ex->getMessage(), $thrownException->getMessage());
+            return;
+        }
+        $this->assertFalse(true);
+    }
+
     protected function getCallableMock()
     {
-        return $this->getMockBuilder('object')
+        return $this->getMockBuilder(\stdClass::class)
             ->setMethods(['doit'])
             ->getMock();
     }

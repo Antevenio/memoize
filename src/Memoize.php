@@ -30,13 +30,13 @@ class Memoize
             if ($memoizable->getUsedMemory() > self::$memoryLimit) {
                 return $memoizable->getResult();
             }
+
             while (self::$usedMemory + $memoizable->getUsedMemory() > self::$memoryLimit) {
                 self::evictCacheEntry();
             }
             self::$usedMemory += $memoizable->getUsedMemory();
             self::$cache[$hash] = $memoizable;
         }
-
         return self::$cache[$hash]->getResult();
     }
 
@@ -73,6 +73,5 @@ class Memoize
         self::$cache = null;
         self::$cache = [];
         self::$usedMemory = 0;
-        gc_collect_cycles();
     }
 }
