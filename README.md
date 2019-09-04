@@ -11,7 +11,7 @@ Yet another in memory function memoizing library.
 ## Features:
 * Can set a limit to the total memory consumption of the cache.
 * Can place a TTL (time to live) per callable. 
-(meaning that memoize will be returning the callable cached results until the ttl expires,
+(meaning that memoize will be returning the callable cached results until the TTL expires,
 in which case it will call the function again and generate a new cached result)  
 * Can override the default callable argument cache indexing with a custom one. 
 (you can reuse a cached callable even passing different arguments if you want to do so)
@@ -88,7 +88,6 @@ Result: 20
 Result: 20
 Result: 20
 Result: 20
-
 ```
 ### Changing arguments
 ```php
