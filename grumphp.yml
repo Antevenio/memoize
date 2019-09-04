@@ -1,0 +1,22 @@
+parameters:
+    git_dir: .
+    bin_dir: vendor/bin
+    ascii:
+      failed: vendor/antevenio/md-phpqa/resources/patan.txt
+      succeeded: vendor/antevenio/md-phpqa/resources/speedy.txt
+    tasks:
+        phpcs: null
+#        phpcpd:
+#            directory: '.'
+#            exclude: ['vendor']
+#            names_exclude: []
+#            regexps_exclude: []
+#            fuzzy: false
+#            min_lines: 5
+#            min_tokens: 70
+#            triggered_by: ['php']
+#        phpmd:
+#            whitelist_patterns: []
+#            exclude: []
+#            ruleset: ['cleancode', 'codesize', 'naming']
+#            triggered_by: ['php']
