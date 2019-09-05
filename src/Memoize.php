@@ -27,12 +27,9 @@ class Memoize
 
         if (!$this->cache->exists($memoizable)) {
             $memoizable->execute();
-            if ($this->cache->fits($memoizable)) {
-                $this->cache->set($memoizable);
-            } else {
-                return $memoizable->getResult();
-            }
+            $this->cache->set($memoizable);
         }
+
         return $this->cache->get($memoizable)->getResult();
     }
 

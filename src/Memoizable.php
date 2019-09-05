@@ -11,7 +11,6 @@ class Memoizable
     protected $ttl;
     protected $arguments;
     protected $callable;
-    protected $usedMemory;
     protected $customIndex;
 
     /**
@@ -50,7 +49,6 @@ class Memoizable
         } catch (\Exception $ex) {
             $this->thrownException = $ex;
         }
-        $this->calculateUsedMemory();
     }
 
     /**
@@ -59,23 +57,6 @@ class Memoizable
     public function getTimestamp()
     {
         return $this->timestamp;
-    }
-
-    public function calculateUsedMemory()
-    {
-        $serialized = serialize($this);
-        $old = memory_get_usage();
-        $dummy = unserialize($serialized);
-        $mem = memory_get_usage();
-        // It seems like dividing this by 2 nails the memory consumption math
-        $this->usedMemory = abs(($mem - $old)/2);
-
-        return $this->usedMemory;
-    }
-
-    public function getUsedMemory()
-    {
-        return $this->usedMemory;
     }
 
     public function getThrownException()
@@ -114,10 +95,10 @@ class Memoizable
             $argumentKey = $this->customIndex;
         }
 
-        return md5($this->serializeCallable($this->getCallable()) . serialize($argumentKey));
+        return md5($this->getCallableHash($this->getCallable()) . serialize($argumentKey));
     }
 
-    protected function serializeCallable(callable $callable)
+    protected function getCallableHash(callable $callable)
     {
         if (is_array($callable)) {
             if (is_object($callable[0])) {

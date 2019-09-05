@@ -4,17 +4,16 @@ namespace Antevenio\Memoize;
 
 class Cache
 {
-    const DEFAULT_MEMORY_LIMIT = 100 * 1024 * 1024;
+    const UNLIMITED = -1;
     /**
      * @var Memoizable[]
      */
     protected static $cache = [];
-    protected static $usedMemory = 0;
-    protected static $memoryLimit = self::DEFAULT_MEMORY_LIMIT;
+    protected static $entryLimit = self::UNLIMITED;
 
-    public function setMemoryLimit($limit)
+    public function setEntryLimit($limit)
     {
-        self::$memoryLimit = $limit;
+        self::$entryLimit = $limit;
 
         return $this;
     }
@@ -38,21 +37,19 @@ class Cache
     }
 
     /**
-     * @param $hash
      * @param Memoizable $memoizable
      */
     public function set(Memoizable $memoizable)
     {
-        while (self::$usedMemory + $memoizable->getUsedMemory() > self::$memoryLimit) {
+        if (count(self::$cache) == self::$entryLimit) {
             $this->evictOldest();
         }
-        self::$usedMemory += $memoizable->getUsedMemory();
+
         self::$cache[$memoizable->getHash()] = $memoizable;
     }
 
     public function delete(Memoizable $memoizable)
     {
-        self::$usedMemory -= $this->get($memoizable)->getUsedMemory();
         unset(self::$cache[$memoizable->getHash()]);
     }
 
@@ -61,15 +58,8 @@ class Cache
         $this->delete(reset(self::$cache));
     }
 
-    public function fits(Memoizable $memoizable)
-    {
-        return ($memoizable->getUsedMemory() <= self::$memoryLimit);
-    }
-
     public function flush()
     {
-        self::$cache = null;
         self::$cache = [];
-        self::$usedMemory = 0;
     }
 }

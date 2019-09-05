@@ -82,6 +82,48 @@ class MemoizeTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($this->returnValue, $this->sut->memoize($memoizable));
     }
 
+    public function testMemoizeShouldExecuteTheCallableOnceIfNoTtlIsSpecified()
+    {
+        $mock = $this->getCallableMock();
+
+        $memoizable = new Memoizable(
+            [$mock, 'doit'],
+            $this->arguments
+        );
+
+        $mock->expects($this->once())
+            ->method('doit')
+            ->with(
+                $this->equalTo($this->arguments[0]),
+                $this->equalTo($this->arguments[1])
+            )
+            ->will($this->returnValue($this->returnValue));
+
+        $this->assertEquals($this->returnValue, $this->sut->memoize($memoizable));
+        $this->assertEquals($this->returnValue, $this->sut->memoize($memoizable));
+    }
+
+    public function testMemoizeShouldExecuteTheCallableOnceIfInfiniteTtlIsSpecified()
+    {
+        $mock = $this->getCallableMock();
+
+        $memoizable = (new Memoizable(
+            [$mock, 'doit'],
+            $this->arguments
+        ))->withTtl(Memoizable::TTL_INFINITE);
+
+        $mock->expects($this->once())
+            ->method('doit')
+            ->with(
+                $this->equalTo($this->arguments[0]),
+                $this->equalTo($this->arguments[1])
+            )
+            ->will($this->returnValue($this->returnValue));
+
+        $this->assertEquals($this->returnValue, $this->sut->memoize($memoizable));
+        $this->assertEquals($this->returnValue, $this->sut->memoize($memoizable));
+    }
+
     public function testMemoizeShouldExecuteTheCallableTwiceOnDifferentArguments()
     {
         $mock = $this->getCallableMock();
@@ -210,25 +252,7 @@ class MemoizeTest extends \PHPUnit_Framework_TestCase
         );
     }
 
-    public function testMemoizeShouldNeverConsumeMemoryPastTheSpecifiedLimit()
-    {
-        $memoryLimit = 10000;
-
-        $this->sut->getCache()->setMemoryLimit(10000);
-
-        for ($i = 0; $i < 100; $i++) {
-            $mock = $this->getCallableMock();
-            $this->sut->memoize(
-                (new Memoizable([$mock, 'doit'], ['a', 'b']))->withTtl(100)
-            );
-        }
-        $totalMemoryUsed = memory_get_usage();
-        $this->sut->getCache()->flush();
-        $used = $totalMemoryUsed  - memory_get_usage();
-        $this->assertLessThan($memoryLimit, $used);
-    }
-
-    public function testMemoizeShouldEvictTheFirstKeyWhenOutOfAvailableMemory()
+    public function testMemoizeShouldEvictTheFirstKeyWhenFull()
     {
         /** @var Memoizable[] $memoizables */
         $memoizables = [
@@ -237,14 +261,7 @@ class MemoizeTest extends \PHPUnit_Framework_TestCase
             (new Memoizable([$this->getCallableMock(), 'doit'], ['a', 'b']))->withTtl(100),
         ];
 
-        $sampleMemoizable = (new Memoizable([$this->getCallableMock(), 'doit'], ['a', 'b']))
-            ->withTtl(100);
-        $memoizableUsedMemory = $sampleMemoizable->calculateUsedMemory();
-        $memoryLimit = $memoizableUsedMemory * 2 +
-            $memoizableUsedMemory / 2;
-        $this->sut->getCache()->setMemoryLimit(
-            $memoryLimit
-        );
+        $this->sut->getCache()->setEntryLimit(2);
         /** @var \PHPUnit_Framework_MockObject_MockObject $mock */
         $mock = $memoizables[0]->getCallable()[0];
         $mock->expects($this->exactly(2))
@@ -259,28 +276,6 @@ class MemoizeTest extends \PHPUnit_Framework_TestCase
         }
 
         $this->sut->memoize($memoizables[0]);
-    }
-
-    public function testMemoizeShouldNotCacheMemoizablesThatExceedTheMemoryLimit()
-    {
-        $mock = $this->getCallableMock();
-        $memoizable = (new Memoizable([$mock, 'doit'], ['a', 'b']))->withTtl(100);
-        $this->sut->getCache()->setMemoryLimit($memoizable->calculateUsedMemory() - 1);
-
-        $mock->expects($this->exactly(2))
-            ->method('doit')
-            ->with(
-                $this->equalTo('a'),
-                $this->equalTo('b')
-            );
-
-        $this->sut->memoize($memoizable);
-        $this->sut->memoize($memoizable);
-
-        $currentUsedMemory = memory_get_usage();
-        $this->sut->getCache()->flush();
-        $consumedMemory = $currentUsedMemory - memory_get_usage();
-        $this->assertLessThanOrEqual(0, $consumedMemory);
     }
 
     public function testMemoizeShouldCacheCallableExceptions()

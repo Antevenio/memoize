@@ -9,7 +9,7 @@
 Yet another in memory function memoizing library. 
 
 ## Features:
-* Can set a limit to the total memory consumption of the cache.
+* Can specify a maximum number of items for the cache to hold.
 * Can place a TTL (time to live) per callable. 
 (meaning that memoize will be returning the callable cached results until the TTL expires,
 in which case it will call the function again and generate a new cached result)  
@@ -18,7 +18,7 @@ in which case it will call the function again and generate a new cached result)
 * Caches thrown exceptions.
 
 ## Behaviour:
-* When out of memory, it evicts the oldest (first cached) callable first.
+* When reaching the maximum number of items in cache, it will evict the oldest (first cached) callable first.
 
 ## Requirements
 The following versions of PHP are supported.
@@ -62,7 +62,7 @@ class Toolbox
 }
 
 $toolbox = new Toolbox();
-$memoize = new Memoize(new Cache());
+$memoize = new Memoize((new Cache())->setEntryLimit(100));
 ```
 ### Basic
 ```php
