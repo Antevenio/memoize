@@ -33,6 +33,8 @@ class Cache
     public function setLogger(LoggerInterface $logger)
     {
         self::$logger = $logger;
+
+        return $this;
     }
 
     /**
