@@ -45,7 +45,7 @@ class Cache
     {
         $result = isset(self::$cache[$memoizable->getHash()]);
         $this->log(
-            "Asking if " . $memoizable->getCallableString() . " is cached => " .
+            "Asking if " . $memoizable . " is cached => " .
             json_encode($result)
         );
         return $result;
@@ -65,7 +65,7 @@ class Cache
     {
         $result = self::$cache[$memoizable->getHash()];
         $this->log(
-            "Getting " . $memoizable->getCallableString() . " from cache"
+            "Getting " . $memoizable . " from cache"
         );
         return $result;
     }
@@ -80,7 +80,7 @@ class Cache
         }
 
         $this->log(
-            "Adding " . $memoizable->getCallableString() . " to cache"
+            "Adding " . $memoizable . " to cache"
         );
         self::$cache[$memoizable->getHash()] = $memoizable;
     }
@@ -88,7 +88,7 @@ class Cache
     public function delete(Memoizable $memoizable)
     {
         $this->log(
-            "Deleting " . $memoizable->getCallableString() . " from cache"
+            "Deleting " . $memoizable . " from cache"
         );
         unset(self::$cache[$memoizable->getHash()]);
     }

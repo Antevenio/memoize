@@ -83,9 +83,9 @@ class Memoizable
         return $this->callable;
     }
 
-    public function getCallableString()
+    public function __toString()
     {
-        return json_encode($this->callable);
+        return json_encode($this->callable) . "::" . json_encode($this->arguments);
     }
 
     public function getArguments()
