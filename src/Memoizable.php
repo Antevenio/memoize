@@ -18,7 +18,7 @@ class Memoizable
      * @param callable $callable
      * @param $arguments
      */
-    public function __construct(callable $callable, $arguments)
+    public function __construct(callable $callable, array $arguments = [])
     {
         $this->ttl = self::TTL_INFINITE;
         $this->customIndex = null;
