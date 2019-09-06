@@ -52,7 +52,7 @@ class Cache
 
     protected function log($message)
     {
-        self::$logger->debug($message . " >>> current entries: " . count(self::$cache));
+        self::$logger->debug("MMZ [" . sprintf('%04d', count(self::$cache)) . "]: $message");
     }
 
     /**
