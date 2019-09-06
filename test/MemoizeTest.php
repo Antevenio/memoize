@@ -4,6 +4,11 @@ namespace Antevenio\Memoize\Test;
 use Antevenio\Memoize\Cache;
 use Antevenio\Memoize\Memoizable;
 use Antevenio\Memoize\Memoize;
+use Exception;
+use Monolog\Handler\StreamHandler;
+use Monolog\Logger;
+use PHPUnit_Framework_TestCase;
+use stdClass;
 
 // phpcs:disable
 $callHistory = [];
@@ -16,7 +21,7 @@ function doit($argument1, $argument2)
 }
 // phpcs:enable
 
-class MemoizeTest extends \PHPUnit_Framework_TestCase
+class MemoizeTest extends PHPUnit_Framework_TestCase
 {
     protected $returnValue;
     protected $thrownException;
@@ -31,7 +36,12 @@ class MemoizeTest extends \PHPUnit_Framework_TestCase
         $this->returnValue = 'some return value';
         $this->arguments = ['argument 1', 'argument 2'];
 
+        $log = new Logger('log');
+        $log->pushHandler(new StreamHandler('php://stdout'));
+
         $this->sut = new Memoize(new Cache());
+        // Uncomment the below line to watch logging
+        // $this->sut->setLogger($log);
         $this->sut->getCache()->flush();
     }
 
@@ -295,7 +305,7 @@ class MemoizeTest extends \PHPUnit_Framework_TestCase
 
     public function testMemoizeShouldCacheCallableExceptions()
     {
-        $thrownException = new \Exception('some message');
+        $thrownException = new Exception('some message');
         $mock = $this->getCallableMock();
         $mock->expects($this->once())
             ->method('doit')
@@ -311,7 +321,7 @@ class MemoizeTest extends \PHPUnit_Framework_TestCase
             $this->sut->memoize(
                 (new Memoizable([$mock, 'doit'], ['a', 'b']))->withTtl(100)
             );
-        } catch (\Exception $ex) {
+        } catch (Exception $ex) {
             $this->assertEquals($ex->getMessage(), $thrownException->getMessage());
             return;
         }
@@ -320,7 +330,7 @@ class MemoizeTest extends \PHPUnit_Framework_TestCase
             $this->sut->memoize(
                 (new Memoizable([$mock, 'doit'], ['a', 'b']))->withTtl(100)
             );
-        } catch (\Exception $ex) {
+        } catch (Exception $ex) {
             $this->assertEquals($ex->getMessage(), $thrownException->getMessage());
             return;
         }
@@ -371,7 +381,7 @@ class MemoizeTest extends \PHPUnit_Framework_TestCase
 
     protected function getCallableMock()
     {
-        return $this->getMockBuilder(\stdClass::class)
+        return $this->getMockBuilder(stdClass::class)
             ->setMethods(['doit'])
             ->getMock();
     }

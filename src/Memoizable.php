@@ -1,6 +1,7 @@
 <?php
 namespace Antevenio\Memoize;
 
+use Exception;
 use function Opis\Closure\serialize as serialize;
 
 class Memoizable
@@ -48,7 +49,7 @@ class Memoizable
         $this->thrownException = null;
         try {
             $this->result = call_user_func_array($this->getCallable(), $this->getArguments());
-        } catch (\Exception $ex) {
+        } catch (Exception $ex) {
             $this->thrownException = $ex;
         }
     }
@@ -87,7 +88,11 @@ class Memoizable
 
     public function __toString()
     {
-        return $this->getCallableId($this->callable) . '::' . serialize($this->arguments);
+        $argumentKey = $this->getArguments();
+        if ($this->customIndex != null) {
+            $argumentKey = $this->customIndex;
+        }
+        return $this->getCallableId($this->callable) . '::' . serialize($argumentKey);
     }
 
     public function getArguments()
@@ -97,12 +102,7 @@ class Memoizable
 
     public function getHash()
     {
-        $argumentKey = $this->getArguments();
-        if ($this->customIndex != null) {
-            $argumentKey = $this->customIndex;
-        }
-
-        return md5($this->getCallableId($this->getCallable()) . serialize($argumentKey));
+        return md5($this->__toString());
     }
 
     protected function getCallableId(callable $callable)
@@ -130,5 +130,10 @@ class Memoizable
             throw $exception;
         }
         return $this->result;
+    }
+
+    public function getShortId()
+    {
+        return mb_strimwidth($this->__toString(), 0, 80, "...");
     }
 }
