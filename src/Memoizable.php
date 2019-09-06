@@ -1,6 +1,8 @@
 <?php
 namespace Antevenio\Memoize;
 
+use function Opis\Closure\serialize as serialize;
+
 class Memoizable
 {
     const TTL_INFINITE = -1;
@@ -85,7 +87,7 @@ class Memoizable
 
     public function __toString()
     {
-        return json_encode($this->callable) . "::" . json_encode($this->arguments);
+        return $this->getCallableId($this->callable) . '::' . serialize($this->arguments);
     }
 
     public function getArguments()
@@ -100,20 +102,22 @@ class Memoizable
             $argumentKey = $this->customIndex;
         }
 
-        return md5($this->getCallableHash($this->getCallable()) . serialize($argumentKey));
+        return md5($this->getCallableId($this->getCallable()) . serialize($argumentKey));
     }
 
-    protected function getCallableHash(callable $callable)
+    protected function getCallableId(callable $callable)
     {
         if (is_array($callable)) {
             if (is_object($callable[0])) {
-                return spl_object_hash($callable[0]) . '::' . $callable[1];
+                return get_class($callable[0]) . '::' .
+                    spl_object_hash($callable[0]) . '::' .
+                    $callable[1];
             } else {
                 return $callable[0] . '::' . $callable[1];
             }
         } else {
             if (is_object($callable)) {
-                return spl_object_hash($callable);
+                return get_class($callable) . '::' . spl_object_hash($callable);
             } else {
                 return $callable;
             }

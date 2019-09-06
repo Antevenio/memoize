@@ -1,6 +1,20 @@
 <?php
+namespace Antevenio\Memoize\Test;
 
-namespace Antevenio\Memoize;
+use Antevenio\Memoize\Cache;
+use Antevenio\Memoize\Memoizable;
+use Antevenio\Memoize\Memoize;
+
+// phpcs:disable
+$callHistory = [];
+
+function doit($argument1, $argument2)
+{
+    global $callHistory;
+
+    $callHistory[] = ['doit', [$argument1, $argument2]];
+}
+// phpcs:enable
 
 class MemoizeTest extends \PHPUnit_Framework_TestCase
 {
@@ -16,6 +30,7 @@ class MemoizeTest extends \PHPUnit_Framework_TestCase
     {
         $this->returnValue = 'some return value';
         $this->arguments = ['argument 1', 'argument 2'];
+
         $this->sut = new Memoize(new Cache());
         $this->sut->getCache()->flush();
     }
@@ -310,6 +325,48 @@ class MemoizeTest extends \PHPUnit_Framework_TestCase
             return;
         }
         $this->assertFalse(true);
+    }
+
+    public function testMemoizeShouldCacheStaticCallablesInArrayNotation()
+    {
+        TestSubject::resetStaticCallHistory();
+        $this->sut->memoize(
+            new Memoizable([TestSubject::class, 'doit'], ['a', 'b'])
+        );
+        $this->assertCount(1, TestSubject::getStaticCallHistory());
+        $this->assertEquals(['doit', ['a', 'b']], TestSubject::getStaticCallHistory()[0]);
+    }
+
+    public function testMemoizeShouldCacheStaticCallablesInStringNotation()
+    {
+        TestSubject::resetStaticCallHistory();
+        $this->sut->memoize(
+            new Memoizable(TestSubject::class . '::doit', ['a', 'b'])
+        );
+        $this->assertCount(1, TestSubject::getStaticCallHistory());
+        $this->assertEquals(['doit', ['a', 'b']], TestSubject::getStaticCallHistory()[0]);
+    }
+
+    public function testMemoizeShouldCacheGlobalFunctionCallables()
+    {
+        global $callHistory;
+
+        $callHistory = [];
+        $this->sut->memoize(
+            new Memoizable('Antevenio\Memoize\Test\doit', ['a', 'b'])
+        );
+        $this->assertCount(1, $callHistory);
+        $this->assertEquals(['doit', ['a', 'b']], $callHistory[0]);
+    }
+
+    public function testMemoizeShouldCacheInvokeFunctionsFromObjects()
+    {
+        $testSubject = new TestSubject();
+        $this->sut->memoize(
+            new Memoizable($testSubject, ['a', 'b'])
+        );
+        $this->assertCount(1, $testSubject->getCallHistory());
+        $this->assertEquals(['doit', ['a', 'b']], $testSubject->getCallHistory()[0]);
     }
 
     protected function getCallableMock()

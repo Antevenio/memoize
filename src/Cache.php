@@ -44,17 +44,15 @@ class Cache
     public function exists(Memoizable $memoizable)
     {
         $result = isset(self::$cache[$memoizable->getHash()]);
-        $this->log(
-            "Asking if " . $memoizable . " is cached => " .
-            json_encode($result)
-        );
+        if (!$result) {
+            $this->log("$memoizable executed");
+        }
         return $result;
     }
 
     protected function log($message)
     {
-        self::$logger->debug($message);
-        self::$logger->debug("Current cache entries: " .  count(self::$cache));
+        self::$logger->debug($message . " >>> current entries: " . count(self::$cache));
     }
 
     /**
@@ -64,9 +62,8 @@ class Cache
     public function get(Memoizable $memoizable)
     {
         $result = self::$cache[$memoizable->getHash()];
-        $this->log(
-            "Getting " . $memoizable . " from cache"
-        );
+        $this->log("$memoizable read from cache");
+
         return $result;
     }
 
@@ -79,30 +76,26 @@ class Cache
             $this->evictOldest();
         }
 
-        $this->log(
-            "Adding " . $memoizable . " to cache"
-        );
+        $this->log("$memoizable added to cache");
         self::$cache[$memoizable->getHash()] = $memoizable;
     }
 
     public function delete(Memoizable $memoizable)
     {
-        $this->log(
-            "Deleting " . $memoizable . " from cache"
-        );
+        $this->log("$memoizable deleted from cache");
         unset(self::$cache[$memoizable->getHash()]);
     }
 
     protected function evictOldest()
     {
         $memoizable = reset(self::$cache);
-        $this->log("Evicting oldest entry from cache. (see next 'deleting' log)");
+        $this->log("evicting oldest cache entry");
         $this->delete($memoizable);
     }
 
     public function flush()
     {
-        $this->log("Flushing cache");
+        $this->log("flushing cache");
         self::$cache = [];
     }
 }

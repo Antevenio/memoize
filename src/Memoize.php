@@ -1,27 +1,16 @@
 <?php
 namespace Antevenio\Memoize;
 
-use Exception;
-
 class Memoize
 {
     /**
      * @var Cache
      */
     protected $cache;
-    /**
-     * @var Debugger
-     */
-    protected $debugger;
 
     public function __construct(Cache $cache)
     {
         $this->cache = $cache;
-    }
-
-    public function setDebugger(Debugger $debugger)
-    {
-        $this->debugger = $debugger;
     }
 
     /**
