@@ -2,6 +2,7 @@
 namespace Antevenio\Memoize;
 
 use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 class Memoize
 {
@@ -13,16 +14,17 @@ class Memoize
     /**
      * @var LoggerInterface
      */
-    protected static $logger;
+    protected $logger;
 
     public function __construct(Cache $cache)
     {
         $this->cache = $cache;
+        $this->logger = new NullLogger();
     }
 
     public function setLogger(LoggerInterface $logger)
     {
-        self::$logger = $logger;
+        $this->logger = $logger;
 
         return $this;
     }
@@ -56,7 +58,7 @@ class Memoize
 
     protected function log($message)
     {
-        self::$logger->debug(
+        $this->logger->debug(
             "MMZ [" . sprintf('%04d', $this->cache->getNumberOfEntries()) . "]: $message"
         );
     }
