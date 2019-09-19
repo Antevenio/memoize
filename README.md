@@ -8,7 +8,7 @@
 
 Yet another in memory function memoizing library. 
 
-## Features:
+## Features
 * Can specify a maximum number of items for the cache to hold.
 * Can place a TTL (time to live) per callable. 
 (meaning that memoize will be returning the callable cached results until the TTL expires,
@@ -17,7 +17,7 @@ in which case it will call the function again and generate a new cached result)
 (you can reuse a cached callable even passing different arguments if you want to do so)
 * Caches thrown exceptions.
 
-## Behaviour:
+## Behaviour
 * When reaching the maximum number of items in cache, it will evict the oldest (first cached) callable first.
 
 ## Requirements
